@@ -1,10 +1,5 @@
 Linzheng Tan
-Computer science / cryptography
+Undergraduate @ CUHK-Shenzhen 
 
-Education: (edit src/content/bio.txt)
-Skills: C++, Python, web tooling
-
-Links: add your GitHub profile URL
-Contact: optional email
-
-Shown when you run: whoami
+Github: https://github.com/tem2021
+Email:  tlinzheng22@gmail.com
