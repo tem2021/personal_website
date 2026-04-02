@@ -1,0 +1,9 @@
+node_modules/
+dist/
+public/articles/
+.DS_Store
+.env
+*.local
+
+# Local-only engineering notes (do not publish)
+ENGINEERING_NOTES_ZH.md

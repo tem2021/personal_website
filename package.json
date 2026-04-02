@@ -1,0 +1,26 @@
+{
+  "name": "personal_website",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "postinstall": "node scripts/copy-katex.mjs",
+    "dev": "node scripts/gen-site-meta.mjs && node scripts/build-articles.mjs && vite",
+    "build": "node scripts/gen-site-meta.mjs && node scripts/build-articles.mjs && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "katex": "^0.16.21"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "rehype-katex": "^7.0.1",
+    "rehype-stringify": "^10.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
+    "typescript": "~5.7.2",
+    "unified": "^11.0.5",
+    "vite": "^6.2.0"
+  }
+}

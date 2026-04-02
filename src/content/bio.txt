@@ -1,0 +1,10 @@
+Linzheng Tan
+Computer science / cryptography
+
+Education: (edit src/content/bio.txt)
+Skills: C++, Python, web tooling
+
+Links: add your GitHub profile URL
+Contact: optional email
+
+Shown when you run: whoami

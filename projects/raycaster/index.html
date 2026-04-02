@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>projects / raycaster</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <article class="prose-page">
+      <header>
+        <p class="back"><a href="../../index.html">← home</a></p>
+        <h1>Animal Feeding — 3D Raycaster (course project)</h1>
+      </header>
+      <div class="prose-body">
+        <p>
+          OpenGL / GLUT course project: a Wolfenstein-style pseudo-3D raycaster mini-game. See the repo for source and build instructions.
+        </p>
+        <div class="project-actions">
+          <a
+            class="btn"
+            href="https://github.com/tem2021/csc3002_3d_raycaster_game"
+            target="_blank"
+            rel="noreferrer"
+            >GitHub repo</a
+          >
+        </div>
+        <p id="video-note" class="terminal-line--system" style="margin-top: 1.25rem">
+          Video is optional. If enabled, it is injected at build time via <code>VITE_DEMO_VIDEO_URL</code>.
+        </p>
+        <div id="video-iframe-host"></div>
+        <video class="demo" controls playsinline muted></video>
+        <p>
+          <a id="fallback-video-link" href="#" target="_blank" rel="noreferrer" style="display: none"
+            >Open video in new tab</a
+          >
+        </p>
+      </div>
+    </article>
+    <script type="module" src="/src/raycaster-page.ts"></script>
+  </body>
+</html>

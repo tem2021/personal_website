@@ -1,0 +1,143 @@
+/* Article pages: black + CGA-style text; white only behind images (transparent PNG line art) */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&display=swap');
+
+html {
+  background: #000000;
+  color: #c0c0c0;
+}
+
+body {
+  margin: 0;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 15px;
+  line-height: 1.45;
+  background: #000000;
+  color: #c0c0c0;
+}
+
+a {
+  color: #55ffff;
+}
+
+a:visited {
+  color: #ff55ff;
+}
+
+a:hover {
+  color: #e0e0e0;
+}
+
+.prose-page {
+  min-height: 100vh;
+  padding: 1.25rem 1.25rem 3rem;
+  max-width: 52rem;
+  margin: 0 auto;
+}
+
+.prose-page header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #404040;
+}
+
+.prose-page h1 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin: 0 0 0.5rem;
+}
+
+.prose-page .back {
+  font-size: 0.9rem;
+  color: #808080;
+}
+
+.prose-body h2 {
+  font-size: 1.15rem;
+  margin-top: 2rem;
+  color: #e0e0e0;
+  font-weight: 600;
+}
+
+.prose-body h3 {
+  font-size: 1.05rem;
+  margin-top: 1.5rem;
+  color: #e0e0e0;
+  font-weight: 600;
+}
+
+.prose-body p,
+.prose-body li {
+  margin: 0.65rem 0;
+}
+
+.prose-body ul,
+.prose-body ol {
+  padding-left: 1.35rem;
+}
+
+/* White mat only under figures so transparent line-art stays visible */
+.prose-body img {
+  width: 100%;
+  max-width: 720px;
+  height: auto;
+  display: block;
+  margin: 0.75rem auto;
+  background: #ffffff;
+  padding: 0.5rem;
+  border: 1px solid #404040;
+  box-sizing: border-box;
+}
+
+.prose-body blockquote {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  border-left: 3px solid #404040;
+  color: #808080;
+}
+
+.prose-body hr {
+  border: none;
+  border-top: 1px solid #404040;
+  margin: 2rem 0;
+}
+
+.prose-body code:not(pre code) {
+  color: #e0e0e0;
+  background: #1a1a1a;
+  padding: 0.12rem 0.35rem;
+  border: 1px solid #404040;
+  font-size: 0.9em;
+}
+
+.prose-body pre {
+  background: #0d0d0d;
+  border: 1px solid #404040;
+  padding: 0.85rem 1rem;
+  overflow-x: auto;
+  font-size: 0.88rem;
+}
+
+.prose-body pre code {
+  color: #c0c0c0;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.katex {
+  color: #c0c0c0;
+}
+
+.prose-body .katex .tag,
+.prose-body .katex-html .tag {
+  display: none !important;
+}
+
+.prose-body .footnotes {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid #404040;
+  font-size: 0.9rem;
+  color: #808080;
+}

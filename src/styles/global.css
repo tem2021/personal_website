@@ -1,0 +1,293 @@
+:root {
+  --bg: #000000;
+  --fg: #c0c0c0;
+  --fg-bright: #e0e0e0;
+  --fg-dim: #808080;
+  --border: #404040;
+
+  /* IBM CGA-style accents (use sparingly) */
+  --cga-cyan: #55ffff;
+  --cga-magenta: #ff55ff;
+  --cga-yellow: #ffff55;
+  --cga-red: #ff5555;
+  --cga-green: #55ff55;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'IBM Plex Mono', 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 15px;
+  line-height: 1.45;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+a {
+  color: var(--cga-cyan);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--fg-bright);
+}
+
+a:visited {
+  color: var(--cga-magenta);
+}
+
+::selection {
+  background: var(--fg-dim);
+  color: var(--bg);
+}
+
+.terminal-app {
+  min-height: 100vh;
+  padding: 1rem 1.25rem 2rem;
+  max-width: 58rem;
+  margin: 0 auto;
+}
+
+.terminal-output {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.terminal-line {
+  margin: 0 0 0.15rem;
+}
+
+.terminal-line--error {
+  color: var(--cga-red);
+}
+
+.terminal-line--system {
+  color: var(--fg-dim);
+}
+
+.terminal-prompt-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+.terminal-prompt {
+  color: var(--fg-bright);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.terminal-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+#terminal-input {
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--fg-bright);
+  font: inherit;
+  padding: 0;
+  caret-color: var(--fg-bright);
+  caret-shape: block;
+}
+
+.terminal-block-caret {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1ch;
+  height: 1.25em;
+  background: var(--fg-bright);
+  pointer-events: none;
+  opacity: 0.9;
+  animation: terminal-caret-blink 1.05s step-end infinite;
+}
+
+@keyframes terminal-caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.welcome-block {
+  margin-bottom: 1rem;
+  color: var(--fg);
+}
+
+.welcome-block .accent {
+  color: var(--cga-yellow);
+}
+
+/* Article / project prose (shared class) */
+.prose-page {
+  min-height: 100vh;
+  padding: 1.25rem 1.25rem 3rem;
+  max-width: 52rem;
+  margin: 0 auto;
+}
+
+.prose-page header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.prose-page h1 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--fg-bright);
+  margin: 0 0 0.5rem;
+}
+
+.prose-page .back {
+  font-size: 0.9rem;
+  color: var(--fg-dim);
+}
+
+.prose-page .back a {
+  color: var(--cga-cyan);
+}
+
+.prose-body h2 {
+  font-size: 1.15rem;
+  margin-top: 2rem;
+  color: var(--fg-bright);
+  font-weight: 600;
+}
+
+.prose-body h3 {
+  font-size: 1.05rem;
+  margin-top: 1.5rem;
+  color: var(--fg-bright);
+  font-weight: 600;
+}
+
+.prose-body p,
+.prose-body li {
+  margin: 0.65rem 0;
+}
+
+.prose-body ul,
+.prose-body ol {
+  padding-left: 1.35rem;
+}
+
+.prose-body img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+}
+
+.prose-body blockquote {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  border-left: 3px solid var(--border);
+  color: var(--fg-dim);
+}
+
+.prose-body hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
+}
+
+.prose-body code:not(pre code) {
+  color: var(--fg-bright);
+  background: #1a1a1a;
+  padding: 0.12rem 0.35rem;
+  border: 1px solid var(--border);
+  font-size: 0.9em;
+}
+
+.prose-body pre {
+  background: #0d0d0d;
+  border: 1px solid var(--border);
+  padding: 0.85rem 1rem;
+  overflow-x: auto;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.prose-body pre code {
+  color: var(--fg);
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* KaTeX: keep math readable on black */
+.katex {
+  color: var(--fg);
+  font-size: 1em;
+}
+
+.prose-body .footnote-ref,
+.prose-body .footnote-backref {
+  color: var(--cga-cyan);
+}
+
+.prose-body .footnotes {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+  color: var(--fg-dim);
+}
+
+video.demo {
+  display: block;
+  max-width: 100%;
+  margin: 1rem 0;
+  border: 1px solid var(--border);
+  background: #0a0a0a;
+}
+
+iframe.demo-iframe {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  margin: 1rem 0;
+  border: 1px solid var(--border);
+  background: #0a0a0a;
+}
+
+.project-actions {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--border);
+  color: var(--fg-bright);
+  background: #111;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.btn:hover {
+  border-color: var(--cga-cyan);
+  color: var(--cga-cyan);
+}

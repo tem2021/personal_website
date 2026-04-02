@@ -1,0 +1,23 @@
+{
+  "articles": [
+    {
+      "slug": "aes-gcm",
+      "file": "aes-gcm.md",
+      "title": "Analysis of AES-GCM",
+      "lsName": "aes-gcm.md",
+      "updated": "2025-04-02T00:00:00.000Z"
+    },
+    {
+      "slug": "lfsrs",
+      "file": "lfsrs.md",
+      "title": "Mathematical principles behind the LFSRs",
+      "lsName": "lfsrs.md",
+      "updated": "2025-04-02T00:00:00.000Z"
+    }
+  ],
+  "projectsMeta": {
+    "raycaster": {
+      "updated": "2025-04-02T00:00:00.000Z"
+    }
+  }
+}
