@@ -103,7 +103,7 @@ const loginTime = new Date().toLocaleString('en-US', {
 });
 
 const welcomeLines = [
-  'Welcome — this site is a static, terminal-style front end.',
+  'Welcome to my personal website! ',
   'Type <span class="accent">help</span> for commands. Use Tab for completion; ↑ ↓ for history.',
   '',
   `<span class="accent">session opened</span> ${escapeHtml(loginTime)}`,
