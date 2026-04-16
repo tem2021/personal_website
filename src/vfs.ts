@@ -55,14 +55,15 @@ export function isFilePath(
   if (segments.length !== 2) return false;
   const [dir, name] = segments;
   if (dir === 'articles') return articleFileNames.has(name);
-  if (dir === 'projects') return name === 'raycaster.html';
+  if (dir === 'projects') return name === 'raycaster.html' || name === 'cuhksz-calendar-sync.html';
   return false;
 }
 
 export function listDir(segments: string[], articleLsNames: string[]): string[] {
   if (segments.length === 0) return ['articles', 'projects'];
   if (segments.length === 1 && segments[0] === 'articles') return [...articleLsNames];
-  if (segments.length === 1 && segments[0] === 'projects') return ['raycaster.html'];
+  if (segments.length === 1 && segments[0] === 'projects')
+    return ['cuhksz-calendar-sync.html', 'raycaster.html'];
   return [];
 }
 

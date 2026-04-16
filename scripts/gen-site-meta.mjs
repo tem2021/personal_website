@@ -27,9 +27,16 @@ const folderArticles =
     : null;
 
 let folderProjects = null;
-const raycasterHtml = join(root, 'projects', 'raycaster', 'index.html');
-if (existsSync(raycasterHtml)) {
-  folderProjects = statSync(raycasterHtml).mtime.toISOString();
+const projectPages = [
+  join(root, 'projects', 'raycaster', 'index.html'),
+  join(root, 'projects', 'cuhksz-calendar-sync', 'index.html'),
+];
+const projectMtimes = projectPages
+  .filter((p) => existsSync(p))
+  .map((p) => statSync(p).mtime.toISOString())
+  .map((iso) => new Date(iso).getTime());
+if (projectMtimes.length > 0) {
+  folderProjects = new Date(Math.max(...projectMtimes)).toISOString();
 }
 
 const out = {

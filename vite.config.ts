@@ -22,6 +22,7 @@ export default defineConfig(({ mode }) => {
         input: {
           main: resolve(__dirname, 'index.html'),
           raycaster: resolve(__dirname, 'projects/raycaster/index.html'),
+          cuhkszCalendarSync: resolve(__dirname, 'projects/cuhksz-calendar-sync/index.html'),
         },
       },
     },

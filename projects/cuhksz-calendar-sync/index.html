@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>projects / CUHKSZ deadlines → Google Calendar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <article class="prose-page">
+      <header>
+        <p class="back"><a href="../../index.html">← home</a></p>
+        <h1>CUHKSZ deadlines → Google Calendar (Cursor automation)</h1>
+      </header>
+
+      <div class="prose-body">
+        <p>
+          This tutorial shows a simple workflow for CUHKSZ students: use Cursor to read Blackboard “What’s Due”
+          items and create Google Calendar events automatically.
+        </p>
+
+        <div class="project-actions">
+          <a class="btn" href="https://github.com/tem2021/google_calendar_mcp" target="_blank" rel="noreferrer"
+            >google_calendar_mcp</a
+          >
+          <a class="btn" href="https://github.com/tem2021/cuhksz_bb_summary" target="_blank" rel="noreferrer"
+            >cuhksz_bb_summary</a
+          >
+          <a class="btn" href="https://www.youtube.com/watch?v=1sOhWoiJYZE" target="_blank" rel="noreferrer"
+            >Google Calendar API video</a
+          >
+        </div>
+
+        <hr />
+
+        <h2>What you will build</h2>
+        <ol>
+          <li>
+            A local script (<code>bbinfo</code>) exports Blackboard deadlines to a text file.
+          </li>
+          <li>
+            A local MCP server (<code>google_calendar_mcp</code>) lets Cursor create Google Calendar events.
+          </li>
+          <li>
+            A Cursor rule makes the command <code>check bbinfo</code> run the script and sync deadlines to your calendar.
+          </li>
+        </ol>
+
+        <h2>Prerequisites</h2>
+        <ul>
+          <li>Cursor installed</li>
+          <li>Python 3.10+ on your machine</li>
+          <li>A Google account</li>
+          <li>Access to CUHKSZ Blackboard</li>
+        </ul>
+
+        <h2>Part 1 — Create Google Calendar API credentials</h2>
+        <p>
+          Follow the <strong>first half</strong> of this tutorial video to create an OAuth Client ID and download
+          a client secret JSON file:
+          <code>https://www.youtube.com/watch?v=1sOhWoiJYZE</code>
+        </p>
+        <p>
+          Goal: you should end up with a file like <code>client_secret_....json</code> on your computer.
+          <strong>Do not commit this file.</strong>
+        </p>
+
+        <h2>Part 2 — Set up <code>google_calendar_mcp</code> in Cursor (MCP server)</h2>
+        <p>
+          Follow the README in <code>google_calendar_mcp</code>:
+          <code>https://github.com/tem2021/google_calendar_mcp</code>
+        </p>
+        <p>High-level steps:</p>
+        <ol>
+          <li>Install the MCP server in a Python environment (pyenv/venv both work).</li>
+          <li>
+            Configure Cursor to start the MCP server (recommended: create <code>.cursor/mcp.json</code> in your project).
+          </li>
+          <li>
+            Set <code>GOOGLE_OAUTH_CLIENT_SECRET_PATH</code> to your downloaded <code>client_secret_....json</code>.
+          </li>
+          <li>
+            Trigger any calendar tool once (for example: <code>calendar_list</code>) to complete OAuth authorization.
+          </li>
+        </ol>
+
+        <p class="terminal-line--system">
+          Tip: Create a separate calendar like “CUHKSZ Deadlines” so you can bulk-delete events if needed.
+        </p>
+
+        <h2>Part 3 — Export Blackboard deadlines with <code>bbinfo</code></h2>
+        <p>
+          Use the script in <code>cuhksz_bb_summary</code>:
+          <code>https://github.com/tem2021/cuhksz_bb_summary</code>
+        </p>
+        <p>
+          After you run it, it produces a text file (for example <code>course_data_summary.txt</code>) that contains:
+        </p>
+        <ul>
+          <li>Announcements</li>
+          <li>Current courses</li>
+          <li><strong>Due items</strong> (the part we want)</li>
+        </ul>
+
+        <h2>Part 4 — Make it one command with a Cursor rule</h2>
+        <p>
+          The goal is: when you say <code>check bbinfo</code>, Cursor will:
+        </p>
+        <ol>
+          <li>Run <code>bbinfo</code> to refresh the summary file.</li>
+          <li>Parse the “Due items” section.</li>
+          <li>Create (or update) Google Calendar events via MCP.</li>
+        </ol>
+
+        <h3>Suggested event format</h3>
+        <ul>
+          <li><strong>Title</strong>: the due item title (keep it short)</li>
+          <li><strong>Description</strong>: course name + “source: Blackboard”</li>
+          <li><strong>Time</strong>: use the due datetime as event end time; set start to 30 minutes earlier</li>
+          <li><strong>Timezone</strong>: make sure the datetime includes <code>+08:00</code></li>
+        </ul>
+
+        <h3>How to avoid duplicates</h3>
+        <p>
+          Use a stable key (for example <code>course + title + due_datetime</code>). Before creating a new event,
+          search existing events in the target calendar for the same key.
+        </p>
+
+        <h2>Troubleshooting</h2>
+        <ul>
+          <li>
+            <strong>OAuth fails</strong>: delete the stored token file and authorize again (see
+            <code>google_calendar_mcp</code> README).
+          </li>
+          <li>
+            <strong>No due items</strong>: confirm you can see “What’s Due” in Blackboard and the script can access it.
+          </li>
+          <li>
+            <strong>Wrong time</strong>: check timezone and the due datetime format in the exported file.
+          </li>
+        </ul>
+
+        <hr />
+        <p class="terminal-line--system">
+          Security reminder: never commit your Blackboard credentials, OAuth client secret, or token files.
+        </p>
+      </div>
+    </article>
+
+    <!-- Import shared site styles -->
+    <script type="module" src="/src/cuhksz-calendar-sync-page.ts"></script>
+  </body>
+</html>
+

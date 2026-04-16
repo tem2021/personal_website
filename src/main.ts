@@ -300,9 +300,8 @@ function runLs(args: string[]): void {
     }
     if (segments[0] === 'projects' && segments.length === 1) {
       const m =
-        name === 'raycaster.html'
-          ? siteMeta.folderProjects ?? projectsMeta.raycaster?.updated
-          : undefined;
+        siteMeta.folderProjects ??
+        (name === 'raycaster.html' ? projectsMeta.raycaster?.updated : undefined);
       rows.push({
         kind: 'file',
         mtime: formatMtime(m),
@@ -321,7 +320,14 @@ function runTree(): void {
     const last = i === articleLsNames.length - 1;
     return `│   ${last ? '└── ' : '├── '}${n}`;
   });
-  const lines = ['.', '├── articles', ...artBranch, '└── projects', '    └── raycaster.html'];
+  const lines = [
+    '.',
+    '├── articles',
+    ...artBranch,
+    '└── projects',
+    '    ├── cuhksz-calendar-sync.html',
+    '    └── raycaster.html',
+  ];
   pushText(lines.join('\n'));
 }
 
@@ -394,7 +400,17 @@ function runCat(arg: string | undefined): void {
     return;
   }
   saveCwd();
-  window.location.assign(`${BASE}projects/raycaster/index.html`);
+  const projectPath =
+    name === 'raycaster.html'
+      ? 'projects/raycaster/index.html'
+      : name === 'cuhksz-calendar-sync.html'
+        ? 'projects/cuhksz-calendar-sync/index.html'
+        : null;
+  if (!projectPath) {
+    pushText(`cat: ${arg}: No such file`, 'terminal-line--error');
+    return;
+  }
+  window.location.assign(`${BASE}${projectPath}`);
 }
 
 function runWhoami(): void {
