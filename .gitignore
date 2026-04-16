@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.cursor/
 public/articles/
 .DS_Store
 .env

@@ -73,7 +73,7 @@ function cwdLabel(): string {
 }
 
 function promptText(): string {
-  return `guest@site:${cwdLabel()}$ `;
+  return `visitor@welcome:${cwdLabel()}$ `;
 }
 
 function saveCwd(): void {
@@ -332,7 +332,7 @@ function runDate(): void {
 }
 
 function runPwd(): void {
-  const physical = '/home/guest' + (cwd.length ? '/' + cwd.join('/') : '');
+  const physical = '/home/visitor' + (cwd.length ? '/' + cwd.join('/') : '');
   pushText(physical);
 }
 
