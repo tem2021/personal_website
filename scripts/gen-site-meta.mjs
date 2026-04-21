@@ -73,6 +73,8 @@ const folderArticles =
 const projectFiles = {};
 const projectTimeCandidates = [];
 
+// New project pages: mirror projects/raycaster/index.html — <body data-home-href="...">,
+// <script src="../../read-nav.js" defer></script> (paths adjust for depth). Prose/read-nav CSS via global.css.
 const projects = [
   { lsName: 'animal-feeding-3d-raycaster.html', path: join(root, 'projects', 'raycaster', 'index.html') },
   {

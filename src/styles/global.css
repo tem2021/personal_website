@@ -296,3 +296,82 @@ iframe.demo-iframe {
   border-color: var(--cga-cyan);
   color: var(--cga-cyan);
 }
+
+/* read-nav.js: keep in sync with public/article.css (projects import global.css; articles use article.css) */
+.prose-body > .read-nav-line--active {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+.read-nav-help-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.72);
+  box-sizing: border-box;
+}
+
+.read-nav-help-panel {
+  max-width: 36rem;
+  width: 100%;
+  max-height: min(90vh, 32rem);
+  overflow: auto;
+  padding: 1.25rem 1.35rem;
+  border: 1px solid var(--border);
+  background: #0a0a0a;
+  color: var(--fg);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.read-nav-help-back {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--fg-dim);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.read-nav-help-back:hover {
+  color: var(--fg-bright);
+}
+
+.read-nav-help-title {
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--fg-bright);
+}
+
+.read-nav-help-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 1rem;
+}
+
+.read-nav-help-table th,
+.read-nav-help-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.35rem 0.5rem 0.35rem 0;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.read-nav-help-table td:first-child {
+  white-space: nowrap;
+  font-weight: 600;
+  color: #b0b0b0;
+  padding-right: 1rem;
+}
+
+.read-nav-help-note {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--fg-dim);
+}

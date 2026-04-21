@@ -135,6 +135,11 @@ function pushText(text: string, className?: string): void {
   }
 }
 
+/** Like bash/readline: before listing ambiguous completions, echo prompt + current line into scrollback. */
+function pushPromptEcho(line: string): void {
+  pushLine(`<span class="terminal-prompt">${escapeHtml(promptText())}</span>${escapeHtml(line)}`);
+}
+
 const outputEl = document.createElement('div');
 outputEl.className = 'terminal-output';
 
@@ -173,9 +178,6 @@ app.appendChild(promptRow);
 
 let history: string[] = [];
 let histIdx = -1;
-let lastTabLine = '';
-let lastTabAt = 0;
-
 function saveTerminalSnapshot(): void {
   try {
     sessionStorage.setItem(
@@ -813,7 +815,6 @@ function parseLsRestForTab(rest: string): { flagPrefix: string; frag: string } {
 
 function applyTabCompletion(): void {
   const line = inputEl.value;
-  const now = Date.now();
   const leadWs = line.match(/^\s*/)?.[0] ?? '';
   const trimmed = line.slice(leadWs.length);
   const sp = trimmed.search(/\s/);
@@ -825,15 +826,11 @@ function applyTabCompletion(): void {
     if (hits.length === 0) return;
     const lcp = longestCommonPrefix(hits);
     if (lcp === p && hits.length > 1) {
-      if (lastTabLine === line && now - lastTabAt < 600) {
-        pushText(hits.join('  '), 'terminal-line--system');
-      }
-      lastTabLine = line;
-      lastTabAt = now;
+      pushPromptEcho(line);
+      pushText(hits.join('  '), 'terminal-line--system');
       return;
     }
     inputEl.value = leadWs + lcp;
-    lastTabLine = '';
     return;
   }
 
@@ -865,16 +862,12 @@ function applyTabCompletion(): void {
   }
 
   if (matches.length > 1 && lcpBase === partialOnly) {
-    if (lastTabLine === line && now - lastTabAt < 600) {
-      pushText(matches.map((m) => dirnamePrefix + m).join('  '), 'terminal-line--system');
-    }
-    lastTabLine = line;
-    lastTabAt = now;
+    pushPromptEcho(line);
+    pushText(matches.map((m) => dirnamePrefix + m).join('  '), 'terminal-line--system');
     return;
   }
 
   inputEl.value = `${leadWs}${cmd} ${flagPrefix}${newPath}`;
-  lastTabLine = '';
 }
 
 restoreTerminalSnapshotIfAny();
@@ -888,6 +881,7 @@ inputEl.addEventListener('keydown', (e) => {
   if (e.key === 'Tab') {
     e.preventDefault();
     applyTabCompletion();
+    promptRow.scrollIntoView({ block: 'end' });
     updateBlockCaretPosition();
     return;
   }
