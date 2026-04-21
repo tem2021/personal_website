@@ -265,6 +265,10 @@ function parseLsArgs(
   return { long, human, target: paths[0] ?? '.' };
 }
 
+function lsFileBaseName(segments: string[]): string {
+  return segments.length === 2 ? segments[1] : segments[0];
+}
+
 function runLs(args: string[]): void {
   const parsed = parseLsArgs(args);
   if ('err' in parsed) {
@@ -278,23 +282,6 @@ function runLs(args: string[]): void {
     return;
   }
   const { segments } = res;
-  if (segments.length === 2) {
-    pushText(`ls: '${target}': Not a directory`, 'terminal-line--error');
-    return;
-  }
-  if (!isDirPath(segments)) {
-    pushText(`ls: cannot access '${target}': No such file or directory`, 'terminal-line--error');
-    return;
-  }
-  const names = listDir(segments, articleLsNames);
-  if (names.length === 0) {
-    pushText(`ls: '${target}': No such file or directory`, 'terminal-line--error');
-    return;
-  }
-  if (!long) {
-    pushText(names.join('\n'));
-    return;
-  }
 
   const formatSize = (bytes: number): string => {
     if (!human) return String(bytes);
@@ -312,6 +299,75 @@ function runLs(args: string[]): void {
   };
 
   const sizeOf = (name: string): number => siteMeta.sizes?.[name] ?? 0;
+
+  if (isFilePath(segments, articleFileNames)) {
+    const baseName = lsFileBaseName(segments);
+    if (!long) {
+      pushText(baseName);
+      return;
+    }
+    let mtimeIso: string | undefined;
+    if (segments.length === 1 && segments[0] === 'profile.txt') {
+      mtimeIso = siteMeta.files['profile.txt'];
+    } else if (segments[0] === 'articles') {
+      mtimeIso = siteMeta.files[baseName];
+    } else {
+      mtimeIso = siteMeta.projectFiles?.[baseName] ?? siteMeta.folderProjects ?? undefined;
+    }
+    const rowsFile: {
+      mode: string;
+      nlink: string;
+      user: string;
+      group: string;
+      size: string;
+      time: string;
+      name: string;
+    }[] = [
+      {
+        mode: '-rw-r--r--',
+        nlink: '1',
+        user: LS_USER,
+        group: LS_GROUP,
+        size: formatSize(sizeOf(baseName)),
+        time: formatLsTime(mtimeIso),
+        name: baseName,
+      },
+    ];
+    const nlinkWf = Math.max(2, ...rowsFile.map((r) => r.nlink.length));
+    const userWf = Math.max(LS_USER.length, ...rowsFile.map((r) => r.user.length));
+    const groupWf = Math.max(LS_GROUP.length, ...rowsFile.map((r) => r.group.length));
+    const sizeWf = Math.max(1, ...rowsFile.map((r) => r.size.length));
+    for (const r of rowsFile) {
+      const line =
+        `${r.mode} ` +
+        `${r.nlink.padStart(nlinkWf, ' ')} ` +
+        `${r.user.padEnd(userWf, ' ')} ` +
+        `${r.group.padEnd(groupWf, ' ')} ` +
+        `${r.size.padStart(sizeWf, ' ')} ` +
+        `${r.time} ` +
+        `${r.name}`;
+      pushText(line);
+    }
+    return;
+  }
+
+  if (segments.length === 2) {
+    pushText(`ls: cannot access '${target}': No such file or directory`, 'terminal-line--error');
+    return;
+  }
+  if (!isDirPath(segments)) {
+    pushText(`ls: cannot access '${target}': No such file or directory`, 'terminal-line--error');
+    return;
+  }
+  const names = listDir(segments, articleLsNames);
+  if (names.length === 0) {
+    pushText(`ls: cannot access '${target}': No such file or directory`, 'terminal-line--error');
+    return;
+  }
+  if (!long) {
+    pushText(names.join('\n'));
+    return;
+  }
 
   const rows: {
     mode: string;
@@ -570,7 +626,7 @@ function runHelp(): void {
       '  cd [DIR]             Change directory',
       '  cat [FILE]           Print file contents',
       '  ls [OPTION]... [PATH]',
-      '                       List directory contents',
+      '                       List file or directory contents',
       '                       -l long listing',
       '                       -h with -l, human-readable sizes',
       '                       -a hidden files',
