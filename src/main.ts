@@ -2,6 +2,7 @@ import './styles/global.css';
 import manifest from '../articles/manifest.json';
 import siteMetaJson from './generated/site-meta.json';
 import profileText from './content/profile.txt?raw';
+import { articleSourceByLsName, projectSourceByLsName } from './cat-sources';
 import {
   normalizePath,
   normalizeCdPath,
@@ -14,8 +15,8 @@ import {
   isVirtualFolderName,
 } from './vfs';
 
-const BASE = import.meta.env.BASE_URL;
 const STORAGE_KEY = 'term_cwd_v1';
+const BASE = import.meta.env.BASE_URL;
 
 const COMMANDS = [
   'cat',
@@ -27,6 +28,7 @@ const COMMANDS = [
   'ls',
   'pwd',
   'tree',
+  'view',
   'whoami',
 ] as const;
 
@@ -559,11 +561,6 @@ function runCd(arg: string | undefined): void {
   saveCwd();
 }
 
-function navigateToArticle(slug: string): void {
-  saveCwd();
-  window.location.assign(`${BASE}articles/${slug}/`);
-}
-
 function runCat(arg: string | undefined): void {
   if (!arg) {
     pushText('cat: missing file operand', 'terminal-line--error');
@@ -589,12 +586,57 @@ function runCat(arg: string | undefined): void {
   }
   const [dir, name] = segments;
   if (dir === 'articles') {
-    const slug = articleLookup.get(name);
-    if (slug) navigateToArticle(slug);
-    else pushText(`cat: ${arg}: No such file`, 'terminal-line--error');
+    const md = articleSourceByLsName.get(name);
+    if (md !== undefined) {
+      pushText(md.trimEnd(), 'terminal-line--system');
+      return;
+    }
+    pushText(`cat: ${arg}: No such file`, 'terminal-line--error');
     return;
   }
-  saveCwd();
+  const html = projectSourceByLsName.get(name);
+  if (html !== undefined) {
+    pushText(html.trimEnd(), 'terminal-line--system');
+    return;
+  }
+  pushText(`cat: ${arg}: No such file`, 'terminal-line--error');
+}
+
+function runView(arg: string | undefined): void {
+  if (!arg) {
+    pushText('view: missing file operand', 'terminal-line--error');
+    return;
+  }
+  const res = normalizePath(arg, cwd);
+  if ('err' in res) {
+    pushText(`view: ${arg}: ${res.err}`, 'terminal-line--error');
+    return;
+  }
+  const { segments } = res;
+  if (!isFilePath(segments, articleFileNames)) {
+    if (isDirPath(segments) && segments.length === 1) {
+      pushText(`view: ${arg}: Is a directory`, 'terminal-line--error');
+      return;
+    }
+    pushText(`view: ${arg}: No such file`, 'terminal-line--error');
+    return;
+  }
+  if (segments.length === 1 && segments[0] === 'profile.txt') {
+    saveCwd();
+    window.location.assign(`${BASE}profile/index.html`);
+    return;
+  }
+  const [dir, name] = segments;
+  if (dir === 'articles') {
+    const slug = articleLookup.get(name);
+    if (slug) {
+      saveCwd();
+      window.location.assign(`${BASE}articles/${slug}/`);
+      return;
+    }
+    pushText(`view: ${arg}: No such file`, 'terminal-line--error');
+    return;
+  }
   const projectPath =
     name === 'animal-feeding-3d-raycaster.html'
       ? 'projects/raycaster/index.html'
@@ -602,9 +644,10 @@ function runCat(arg: string | undefined): void {
         ? 'projects/cuhksz-calendar-sync/index.html'
         : null;
   if (!projectPath) {
-    pushText(`cat: ${arg}: No such file`, 'terminal-line--error');
+    pushText(`view: ${arg}: No such file`, 'terminal-line--error');
     return;
   }
+  saveCwd();
   window.location.assign(`${BASE}${projectPath}`);
 }
 
@@ -624,7 +667,8 @@ function runHelp(): void {
       '  exit                 Close this terminal',
       '  whoami               Print effective user',
       '  cd [DIR]             Change directory',
-      '  cat [FILE]           Print file contents',
+      '  cat [FILE]           Print raw file contents',
+      '  view [FILE]          Open formatted page',
       '  ls [OPTION]... [PATH]',
       '                       List file or directory contents',
       '                       -l long listing',
@@ -656,6 +700,9 @@ function execLine(line: string): void {
       break;
     case 'cat':
       runCat(rest.join(' ') || undefined);
+      break;
+    case 'view':
+      runView(rest.join(' ') || undefined);
       break;
     case 'whoami':
       runWhoami();

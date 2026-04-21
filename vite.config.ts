@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         input: {
           main: resolve(__dirname, 'index.html'),
+          profile: resolve(__dirname, 'profile/index.html'),
           raycaster: resolve(__dirname, 'projects/raycaster/index.html'),
           cuhkszCalendarSync: resolve(__dirname, 'projects/cuhksz-calendar-sync/index.html'),
         },
