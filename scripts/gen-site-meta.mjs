@@ -1,48 +1,80 @@
 /**
- * Writes src/generated/site-meta.json from filesystem mtimes (like Unix directory times).
- * Run before Vite so main.ts can import file mtimes for ls -l.
+ * Writes src/generated/site-meta.json from Git last-commit times.
+ * Run before Vite so main.ts can import mtimes for `ls -l`.
  */
 import { readFileSync, writeFileSync, mkdirSync, statSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
 const manifest = JSON.parse(readFileSync(join(root, 'articles/manifest.json'), 'utf8'));
 
+function tryGitLastCommitIso(absPath) {
+  try {
+    const relPath = relative(root, absPath);
+    if (!relPath || relPath.startsWith('..')) return null;
+    const out = execFileSync('git', ['log', '-1', '--format=%cI', '--', relPath], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+    return out ? out : null;
+  } catch {
+    return null;
+  }
+}
+
+function autoIsoForPath(absPath) {
+  const gitIso = tryGitLastCommitIso(absPath);
+  if (gitIso) return gitIso;
+  try {
+    return statSync(absPath).mtime.toISOString();
+  } catch {
+    return null;
+  }
+}
+
 const files = {};
-const articleMtimes = [];
+const articleTimes = [];
 
 for (const a of manifest.articles) {
   const p = join(root, 'articles', a.file);
   if (!existsSync(p)) continue;
-  const iso = statSync(p).mtime.toISOString();
+  const iso = autoIsoForPath(p);
+  if (!iso) continue;
   files[a.lsName] = iso;
-  articleMtimes.push(new Date(iso).getTime());
+  articleTimes.push(new Date(iso).getTime());
 }
 
 const folderArticles =
-  articleMtimes.length > 0
-    ? new Date(Math.max(...articleMtimes)).toISOString()
+  articleTimes.length > 0
+    ? new Date(Math.max(...articleTimes)).toISOString()
     : null;
 
-let folderProjects = null;
-const projectPages = [
-  join(root, 'projects', 'raycaster', 'index.html'),
-  join(root, 'projects', 'cuhksz-calendar-sync', 'index.html'),
+const projectFiles = {};
+const projectTimeCandidates = [];
+
+const projects = [
+  { lsName: 'raycaster.html', path: join(root, 'projects', 'raycaster', 'index.html') },
+  { lsName: 'cuhksz-calendar-sync.html', path: join(root, 'projects', 'cuhksz-calendar-sync', 'index.html') },
 ];
-const projectMtimes = projectPages
-  .filter((p) => existsSync(p))
-  .map((p) => statSync(p).mtime.toISOString())
-  .map((iso) => new Date(iso).getTime());
-if (projectMtimes.length > 0) {
-  folderProjects = new Date(Math.max(...projectMtimes)).toISOString();
+for (const p of projects) {
+  if (!existsSync(p.path)) continue;
+  const iso = autoIsoForPath(p.path);
+  if (!iso) continue;
+  projectFiles[p.lsName] = iso;
+  projectTimeCandidates.push(new Date(iso).getTime());
 }
+const folderProjects =
+  projectTimeCandidates.length > 0 ? new Date(Math.max(...projectTimeCandidates)).toISOString() : null;
 
 const out = {
   files,
   folderArticles,
   folderProjects,
+  projectFiles,
 };
 
 const outDir = join(root, 'src', 'generated');

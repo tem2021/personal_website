@@ -32,28 +32,26 @@ interface ArticleEntry {
   slug: string;
   lsName: string;
   title: string;
-  updated?: string;
 }
 
 type ManifestShape = {
   articles: ArticleEntry[];
-  projectsMeta?: { raycaster?: { updated?: string } };
 };
 
 const manifestData = manifest as unknown as ManifestShape;
 const articles: ArticleEntry[] = manifestData.articles;
-const projectsMeta = manifestData.projectsMeta ?? {};
 
 interface SiteMetaFile {
   files: Record<string, string>;
   folderArticles: string | null;
   folderProjects: string | null;
+  projectFiles?: Record<string, string>;
 }
 
 const siteMeta = siteMetaJson as SiteMetaFile;
 
 function mtimeForArticleLsName(lsName: string): string | undefined {
-  return siteMeta.files[lsName] ?? articles.find((a) => a.lsName === lsName)?.updated;
+  return siteMeta.files[lsName];
 }
 
 const articleLsNames = articles.map((a) => a.lsName);
@@ -299,9 +297,7 @@ function runLs(args: string[]): void {
       continue;
     }
     if (segments[0] === 'projects' && segments.length === 1) {
-      const m =
-        siteMeta.folderProjects ??
-        (name === 'raycaster.html' ? projectsMeta.raycaster?.updated : undefined);
+      const m = siteMeta.projectFiles?.[name] ?? siteMeta.folderProjects;
       rows.push({
         kind: 'file',
         mtime: formatMtime(m),
