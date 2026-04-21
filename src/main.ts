@@ -16,6 +16,7 @@ import {
 } from './vfs';
 
 const STORAGE_KEY = 'term_cwd_v1';
+const SNAPSHOT_STORAGE_KEY = 'term_snapshot_v1';
 const BASE = import.meta.env.BASE_URL;
 
 const COMMANDS = [
@@ -128,7 +129,10 @@ function pushLine(html: string, className?: string): void {
 }
 
 function pushText(text: string, className?: string): void {
-  for (const line of text.split('\n')) pushLine(escapeHtml(line), className);
+  for (const line of text.split('\n')) {
+    // Empty lines must render as <br />; a bare <p></p> collapses to zero height in the browser.
+    pushLine(line === '' ? '<br />' : escapeHtml(line), className);
+  }
 }
 
 const outputEl = document.createElement('div');
@@ -171,6 +175,43 @@ let history: string[] = [];
 let histIdx = -1;
 let lastTabLine = '';
 let lastTabAt = 0;
+
+function saveTerminalSnapshot(): void {
+  try {
+    sessionStorage.setItem(
+      SNAPSHOT_STORAGE_KEY,
+      JSON.stringify({
+        outputHtml: outputEl.innerHTML,
+        history,
+        histIdx,
+      }),
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+function restoreTerminalSnapshotIfAny(): void {
+  try {
+    const raw = sessionStorage.getItem(SNAPSHOT_STORAGE_KEY);
+    if (!raw) return;
+    sessionStorage.removeItem(SNAPSHOT_STORAGE_KEY);
+    const data = JSON.parse(raw) as unknown;
+    if (typeof data !== 'object' || data === null) return;
+    const rec = data as { outputHtml?: unknown; history?: unknown; histIdx?: unknown };
+    if (typeof rec.outputHtml !== 'string') return;
+    outputEl.innerHTML = rec.outputHtml;
+    if (Array.isArray(rec.history) && rec.history.every((x): x is string => typeof x === 'string')) {
+      history.length = 0;
+      history.push(...rec.history);
+    }
+    if (typeof rec.histIdx === 'number' && Number.isFinite(rec.histIdx)) {
+      histIdx = Math.min(Math.max(-1, rec.histIdx), history.length);
+    }
+  } catch {
+    /* ignore */
+  }
+}
 
 const nativeBlockCaretSupported =
   typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && CSS.supports('caret-shape: block');
@@ -510,6 +551,7 @@ function runTree(): void {
 function runExit(): void {
   try {
     sessionStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(SNAPSHOT_STORAGE_KEY);
   } catch {
     /* ignore */
   }
@@ -622,6 +664,7 @@ function runView(arg: string | undefined): void {
     return;
   }
   if (segments.length === 1 && segments[0] === 'profile.txt') {
+    saveTerminalSnapshot();
     saveCwd();
     window.location.assign(`${BASE}profile/index.html`);
     return;
@@ -630,6 +673,7 @@ function runView(arg: string | undefined): void {
   if (dir === 'articles') {
     const slug = articleLookup.get(name);
     if (slug) {
+      saveTerminalSnapshot();
       saveCwd();
       window.location.assign(`${BASE}articles/${slug}/`);
       return;
@@ -647,6 +691,7 @@ function runView(arg: string | undefined): void {
     pushText(`view: ${arg}: No such file`, 'terminal-line--error');
     return;
   }
+  saveTerminalSnapshot();
   saveCwd();
   window.location.assign(`${BASE}${projectPath}`);
 }
@@ -669,6 +714,8 @@ function runHelp(): void {
       '  cd [DIR]             Change directory',
       '  cat [FILE]           Print raw file contents',
       '  view [FILE]          Open formatted page',
+      '                       On those pages: ? opens keyboard help; q closes help',
+      '                       or returns home. Click ← close help in the panel too.',
       '  ls [OPTION]... [PATH]',
       '                       List file or directory contents',
       '                       -l long listing',
@@ -830,7 +877,9 @@ function applyTabCompletion(): void {
   lastTabLine = '';
 }
 
+restoreTerminalSnapshotIfAny();
 renderPrompt();
+promptRow.scrollIntoView({ block: 'end' });
 
 installBlockCaretFallback();
 updateBlockCaretPosition();

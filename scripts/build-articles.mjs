@@ -42,7 +42,7 @@ function articleShell(title, bodyHtml) {
   <link rel="stylesheet" href="../../katex/katex.min.css" />
   <link rel="stylesheet" href="../../article.css" />
 </head>
-<body>
+<body data-home-href="../../index.html">
   <article class="prose-page">
     <header>
       <p class="back"><a href="../../index.html">← home</a></p>
@@ -52,6 +52,7 @@ function articleShell(title, bodyHtml) {
 ${bodyHtml}
     </div>
   </article>
+  <script src="../../read-nav.js" defer></script>
 </body>
 </html>
 `;
