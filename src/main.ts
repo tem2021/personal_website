@@ -1,9 +1,10 @@
 import './styles/global.css';
 import manifest from '../articles/manifest.json';
 import siteMetaJson from './generated/site-meta.json';
-import bio from './content/bio.txt?raw';
+import profileText from './content/profile.txt?raw';
 import {
   normalizePath,
+  normalizeCdPath,
   isDirPath,
   isFilePath,
   listDir,
@@ -21,6 +22,7 @@ const COMMANDS = [
   'cd',
   'clear',
   'date',
+  'exit',
   'help',
   'ls',
   'pwd',
@@ -43,6 +45,7 @@ const articles: ArticleEntry[] = manifestData.articles;
 
 interface SiteMetaFile {
   files: Record<string, string>;
+  sizes?: Record<string, number>;
   folderArticles: string | null;
   folderProjects: string | null;
   projectFiles?: Record<string, string>;
@@ -212,31 +215,54 @@ function renderPrompt(): void {
   promptSpan.textContent = promptText();
 }
 
-function formatMtime(iso?: string): string {
-  if (!iso) return '—';
+const LS_USER = 'linzhengtan';
+const LS_GROUP = 'public';
+
+function two(n: number): string {
+  return n < 10 ? `0${n}` : String(n);
+}
+
+function formatLsTime(iso?: string): string {
+  if (!iso) return '??? ?? ??:??';
   try {
     const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return '—';
-    return d.toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
+    if (Number.isNaN(d.getTime())) return '??? ?? ??:??';
+
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const mon = months[d.getMonth()] ?? '???';
+    const day = String(d.getDate()).padStart(2, ' ');
+
+    const now = new Date();
+    const sameYear = d.getFullYear() === now.getFullYear();
+    if (sameYear) {
+      return `${mon} ${day} ${two(d.getHours())}:${two(d.getMinutes())}`;
+    }
+    return `${mon} ${day}  ${d.getFullYear()}`;
   } catch {
-    return '—';
+    return '??? ?? ??:??';
   }
 }
 
 function parseLsArgs(
   args: string[],
-): { long: boolean; target: string } | { err: string } {
-  const flags: string[] = [];
+): { long: boolean; human: boolean; target: string } | { err: string } {
   const paths: string[] = [];
+  let long = false;
+  let human = false;
+  let all = false;
   for (const a of args) {
     if (a.startsWith('-')) {
-      if (a === '-l' || a === '-la') flags.push(a);
-      else return { err: `ls: invalid option -- '${a}'` };
+      // Support common combined flags: -l, -a, -h, -la, -lh, -alh, ...
+      for (const ch of a.slice(1)) {
+        if (ch === 'l') long = true;
+        else if (ch === 'h') human = true;
+        else if (ch === 'a') all = true;
+        else return { err: `ls: invalid option -- '${ch}'` };
+      }
     } else paths.push(a);
   }
-  const long = flags.length > 0;
   if (paths.length > 1) return { err: 'ls: too many arguments' };
-  return { long, target: paths[0] ?? '.' };
+  return { long, human, target: paths[0] ?? '.' };
 }
 
 function runLs(args: string[]): void {
@@ -245,7 +271,7 @@ function runLs(args: string[]): void {
     pushText(parsed.err, 'terminal-line--error');
     return;
   }
-  const { long, target } = parsed;
+  const { long, human, target } = parsed;
   const res = normalizePath(target, cwd);
   if ('err' in res) {
     pushText(`ls: cannot access '${target}': ${res.err}`, 'terminal-line--error');
@@ -270,28 +296,70 @@ function runLs(args: string[]): void {
     return;
   }
 
-  const kindW = 8;
-  const timeW = 22;
-  const rows: { kind: string; mtime: string; name: string }[] = [];
+  const formatSize = (bytes: number): string => {
+    if (!human) return String(bytes);
+    if (!Number.isFinite(bytes) || bytes < 0) return '0';
+    if (bytes < 1024) return String(bytes);
+    const units = ['K', 'M', 'G', 'T', 'P', 'E'];
+    let v = bytes / 1024;
+    let u = 0;
+    while (v >= 1024 && u < units.length - 1) {
+      v /= 1024;
+      u++;
+    }
+    const num = v < 10 ? v.toFixed(1) : Math.round(v).toString();
+    return `${num}${units[u]}`;
+  };
+
+  const sizeOf = (name: string): number => siteMeta.sizes?.[name] ?? 0;
+
+  const rows: {
+    mode: string;
+    nlink: string;
+    user: string;
+    group: string;
+    size: string;
+    time: string;
+    name: string;
+  }[] = [];
+
   for (const name of names) {
     if (segments.length === 0) {
-      const folderMtime =
-        name === 'articles'
-          ? siteMeta.folderArticles
-          : name === 'projects'
-            ? siteMeta.folderProjects
-            : undefined;
-      rows.push({
-        kind: 'folder',
-        mtime: formatMtime(folderMtime ?? undefined),
-        name,
-      });
+      if (name === 'articles' || name === 'projects') {
+        const folderMtime = name === 'articles' ? siteMeta.folderArticles : siteMeta.folderProjects;
+        rows.push({
+          mode: 'drwxr-xr-x',
+          nlink: '2',
+          user: LS_USER,
+          group: LS_GROUP,
+          size: formatSize(4096),
+          time: formatLsTime(folderMtime ?? undefined),
+          name,
+        });
+        continue;
+      }
+      if (name === 'profile.txt') {
+        rows.push({
+          mode: '-rw-r--r--',
+          nlink: '1',
+          user: LS_USER,
+          group: LS_GROUP,
+          size: formatSize(sizeOf(name)),
+          time: formatLsTime(siteMeta.files['profile.txt']),
+          name,
+        });
+        continue;
+      }
       continue;
     }
     if (segments[0] === 'articles' && segments.length === 1) {
       rows.push({
-        kind: 'file',
-        mtime: formatMtime(mtimeForArticleLsName(name)),
+        mode: '-rw-r--r--',
+        nlink: '1',
+        user: LS_USER,
+        group: LS_GROUP,
+        size: formatSize(sizeOf(name)),
+        time: formatLsTime(mtimeForArticleLsName(name)),
         name,
       });
       continue;
@@ -299,32 +367,99 @@ function runLs(args: string[]): void {
     if (segments[0] === 'projects' && segments.length === 1) {
       const m = siteMeta.projectFiles?.[name] ?? siteMeta.folderProjects;
       rows.push({
-        kind: 'file',
-        mtime: formatMtime(m),
+        mode: '-rw-r--r--',
+        nlink: '1',
+        user: LS_USER,
+        group: LS_GROUP,
+        size: formatSize(sizeOf(name)),
+        time: formatLsTime(m),
         name,
       });
     }
   }
+
+  const nlinkW = Math.max(2, ...rows.map((r) => r.nlink.length));
+  const userW = Math.max(LS_USER.length, ...rows.map((r) => r.user.length));
+  const groupW = Math.max(LS_GROUP.length, ...rows.map((r) => r.group.length));
+  const sizeW = Math.max(1, ...rows.map((r) => r.size.length));
+
   for (const r of rows) {
-    const line = `${r.kind.padEnd(kindW)} ${r.mtime.padEnd(timeW)} ${r.name}`;
+    const line =
+      `${r.mode} ` +
+      `${r.nlink.padStart(nlinkW, ' ')} ` +
+      `${r.user.padEnd(userW, ' ')} ` +
+      `${r.group.padEnd(groupW, ' ')} ` +
+      `${r.size.padStart(sizeW, ' ')} ` +
+      `${r.time} ` +
+      `${r.name}`;
     pushText(line);
   }
 }
 
+/** ASCII tree for a flat list of names (current directory only). */
+function treeFlat(names: string[]): string[] {
+  const sorted = [...names].sort();
+  if (sorted.length === 0) return ['.'];
+  const lines: string[] = ['.'];
+  for (let i = 0; i < sorted.length; i++) {
+    const last = i === sorted.length - 1;
+    lines.push(`${last ? '└── ' : '├── '}${sorted[i]}`);
+  }
+  return lines;
+}
+
 function runTree(): void {
-  const artBranch = articleLsNames.map((n, i) => {
-    const last = i === articleLsNames.length - 1;
-    return `│   ${last ? '└── ' : '├── '}${n}`;
-  });
-  const lines = [
-    '.',
-    '├── articles',
-    ...artBranch,
-    '└── projects',
-    '    ├── cuhksz-calendar-sync.html',
-    '    └── raycaster.html',
-  ];
-  pushText(lines.join('\n'));
+  if (cwd.length === 0) {
+    const top = listDir([], articleLsNames);
+    const lines: string[] = ['.'];
+    for (let i = 0; i < top.length; i++) {
+      const name = top[i];
+      const isLastTop = i === top.length - 1;
+      const branch = isLastTop ? '└── ' : '├── ';
+      const cont = isLastTop ? '    ' : '│   ';
+      if (name === 'articles') {
+        lines.push(`${branch}articles`);
+        const files = listDir(['articles'], articleLsNames);
+        for (let j = 0; j < files.length; j++) {
+          const lastF = j === files.length - 1;
+          lines.push(`${cont}${lastF ? '└── ' : '├── '}${files[j]}`);
+        }
+      } else if (name === 'projects') {
+        lines.push(`${branch}projects`);
+        const files = listDir(['projects'], articleLsNames);
+        for (let j = 0; j < files.length; j++) {
+          const lastF = j === files.length - 1;
+          lines.push(`${cont}${lastF ? '└── ' : '├── '}${files[j]}`);
+        }
+      } else {
+        lines.push(`${branch}${name}`);
+      }
+    }
+    pushText(lines.join('\n'));
+    return;
+  }
+  if (cwd.length === 1 && cwd[0] === 'articles') {
+    pushText(treeFlat(listDir(['articles'], articleLsNames)).join('\n'));
+    return;
+  }
+  if (cwd.length === 1 && cwd[0] === 'projects') {
+    pushText(treeFlat(listDir(['projects'], articleLsNames)).join('\n'));
+    return;
+  }
+  pushText('.');
+}
+
+function runExit(): void {
+  try {
+    sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+  app.innerHTML = '';
+  const end = document.createElement('p');
+  end.className = 'terminal-session-end';
+  end.textContent = 'Session closed.';
+  app.appendChild(end);
 }
 
 function runDate(): void {
@@ -345,7 +480,7 @@ function runCd(arg: string | undefined): void {
     saveCwd();
     return;
   }
-  const res = normalizePath(arg, cwd);
+  const res = normalizeCdPath(arg, cwd);
   if ('err' in res) {
     pushText(`cd: ${arg}: ${res.err}`, 'terminal-line--error');
     return;
@@ -356,6 +491,10 @@ function runCd(arg: string | undefined): void {
     return;
   }
   if (!isDirPath(segments)) {
+    if (isFilePath(segments, articleFileNames)) {
+      pushText(`cd: ${arg}: Not a directory`, 'terminal-line--error');
+      return;
+    }
     pushText(`cd: ${arg}: No such file or directory`, 'terminal-line--error');
     return;
   }
@@ -388,6 +527,10 @@ function runCat(arg: string | undefined): void {
     pushText(`cat: ${arg}: No such file`, 'terminal-line--error');
     return;
   }
+  if (segments.length === 1 && segments[0] === 'profile.txt') {
+    pushText(profileText.trimEnd(), 'terminal-line--system');
+    return;
+  }
   const [dir, name] = segments;
   if (dir === 'articles') {
     const slug = articleLookup.get(name);
@@ -397,9 +540,9 @@ function runCat(arg: string | undefined): void {
   }
   saveCwd();
   const projectPath =
-    name === 'raycaster.html'
+    name === 'animal-feeding-3d-raycaster.html'
       ? 'projects/raycaster/index.html'
-      : name === 'cuhksz-calendar-sync.html'
+      : name === 'cuhksz-deadlines-to-google-calendar.html'
         ? 'projects/cuhksz-calendar-sync/index.html'
         : null;
   if (!projectPath) {
@@ -410,22 +553,27 @@ function runCat(arg: string | undefined): void {
 }
 
 function runWhoami(): void {
-  pushText(bio.trimEnd(), 'terminal-line--system');
+  pushText('visitor', 'terminal-line--system');
 }
 
 function runHelp(): void {
   pushText(
     [
       'Commands:',
-      '  help       — this list',
-      '  clear      — clear the screen',
-      '  date       — current date and time',
-      '  pwd        — print working directory (virtual)',
-      '  tree       — show directory tree from ~',
-      '  ls [PATH]  — list directory; use ls -l for type + mtime + name',
-      '  cd DIR     — change directory (articles | projects | .. | ~ | /)',
-      '  cat FILE   — open an article or project page',
-      '  whoami     — short bio (edit src/content/bio.txt)',
+      '  help                 Print this help',
+      '  clear                Clear the screen',
+      '  date                 Print date/time',
+      '  pwd                  Print current path',
+      '  tree                 Print tree from current directory',
+      '  exit                 Close this terminal',
+      '  whoami               Print effective user',
+      '  cd [DIR]             Change directory',
+      '  cat [FILE]           Print file contents',
+      '  ls [OPTION]... [PATH]',
+      '                       List directory contents',
+      '                       -l long listing',
+      '                       -h with -l, human-readable sizes',
+      '                       -a hidden files',
     ].join('\n'),
     'terminal-line--system',
   );
@@ -465,6 +613,9 @@ function execLine(line: string): void {
     case 'tree':
       runTree();
       break;
+    case 'exit':
+      runExit();
+      break;
     case 'date':
       runDate();
       break;
@@ -485,17 +636,24 @@ function onSubmit(): void {
   inputEl.value = '';
 
   execLine(line);
+  if (!app.contains(promptRow)) return;
   promptRow.scrollIntoView({ block: 'end' });
   inputEl.focus();
 }
 
-/** For `ls -l ...` / `ls -la ...`, strip known flags so the rest is a path fragment. */
+/** For `ls ...`, strip known flags so the rest is a path fragment. */
 function parseLsRestForTab(rest: string): { flagPrefix: string; frag: string } {
   const parts = rest.trim().split(/\s+/).filter(Boolean);
   const flags: string[] = [];
   let i = 0;
-  while (i < parts.length && (parts[i] === '-l' || parts[i] === '-la')) {
-    flags.push(parts[i]);
+  while (i < parts.length && parts[i].startsWith('-') && parts[i] !== '-') {
+    const token = parts[i];
+    // Accept only l/h flags here; anything else should remain so `ls` can error on Enter.
+    const body = token.slice(1);
+    if (body.length === 0) break;
+    const ok = [...body].every((ch) => ch === 'l' || ch === 'h' || ch === 'a');
+    if (!ok) break;
+    flags.push(token);
     i++;
   }
   const frag = parts.slice(i).join(' ');

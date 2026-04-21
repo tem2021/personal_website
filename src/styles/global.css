@@ -60,6 +60,11 @@ a:visited {
   margin: 0 auto;
 }
 
+.terminal-session-end {
+  margin: 0;
+  color: var(--fg-dim);
+}
+
 .terminal-output {
   white-space: pre-wrap;
   word-break: break-word;

@@ -37,6 +37,7 @@ function autoIsoForPath(absPath) {
 }
 
 const files = {};
+const sizes = {};
 const articleTimes = [];
 
 for (const a of manifest.articles) {
@@ -45,7 +46,23 @@ for (const a of manifest.articles) {
   const iso = autoIsoForPath(p);
   if (!iso) continue;
   files[a.lsName] = iso;
+  try {
+    sizes[a.lsName] = statSync(p).size;
+  } catch {
+    // ignore
+  }
   articleTimes.push(new Date(iso).getTime());
+}
+
+const profilePath = join(root, 'src', 'content', 'profile.txt');
+if (existsSync(profilePath)) {
+  const iso = autoIsoForPath(profilePath);
+  if (iso) files['profile.txt'] = iso;
+  try {
+    sizes['profile.txt'] = statSync(profilePath).size;
+  } catch {
+    // ignore
+  }
 }
 
 const folderArticles =
@@ -57,14 +74,22 @@ const projectFiles = {};
 const projectTimeCandidates = [];
 
 const projects = [
-  { lsName: 'raycaster.html', path: join(root, 'projects', 'raycaster', 'index.html') },
-  { lsName: 'cuhksz-calendar-sync.html', path: join(root, 'projects', 'cuhksz-calendar-sync', 'index.html') },
+  { lsName: 'animal-feeding-3d-raycaster.html', path: join(root, 'projects', 'raycaster', 'index.html') },
+  {
+    lsName: 'cuhksz-deadlines-to-google-calendar.html',
+    path: join(root, 'projects', 'cuhksz-calendar-sync', 'index.html'),
+  },
 ];
 for (const p of projects) {
   if (!existsSync(p.path)) continue;
   const iso = autoIsoForPath(p.path);
   if (!iso) continue;
   projectFiles[p.lsName] = iso;
+  try {
+    sizes[p.lsName] = statSync(p.path).size;
+  } catch {
+    // ignore
+  }
   projectTimeCandidates.push(new Date(iso).getTime());
 }
 const folderProjects =
@@ -72,6 +97,7 @@ const folderProjects =
 
 const out = {
   files,
+  sizes,
   folderArticles,
   folderProjects,
   projectFiles,

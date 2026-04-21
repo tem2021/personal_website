@@ -1,4 +1,77 @@
-/** Virtual filesystem: ~ contains articles/ and projects/ only (flat files under each). */
+/** Virtual filesystem: ~ contains profile.txt plus articles/ and projects/ (flat files under each). */
+
+function splitPathParts(s: string): string[] {
+  return s.split('/').filter((p) => p.length > 0 && p !== '.');
+}
+
+function resolveAbsoluteFromRoot(parts: string[]): string[] {
+  const stk: string[] = [];
+  for (const p of parts) {
+    if (p === '..') {
+      if (stk.length > 0) stk.pop();
+    } else {
+      stk.push(p);
+    }
+  }
+  return stk;
+}
+
+/**
+ * Map a resolved absolute path (from `/`) onto virtual cwd segments under `/home/visitor`.
+ * Anything outside `/home/visitor` is `Permission denied`.
+ */
+function mapAbsoluteToVirtualCd(abs: string[]): { segments: string[] } | { err: string } {
+  if (abs.length < 2 || abs[0] !== 'home' || abs[1] !== 'visitor') {
+    return { err: 'Permission denied' };
+  }
+  const virtual = abs.slice(2);
+  if (virtual.length > 2) {
+    return { err: 'No such file or directory' };
+  }
+  return { segments: virtual };
+}
+
+function walkCdRelative(parts: string[], stack: string[]): { segments: string[] } | { err: string } {
+  for (const p of parts) {
+    if (p === '..') {
+      if (stack.length === 0) return { err: 'Permission denied' };
+      stack.pop();
+    } else {
+      stack.push(p);
+    }
+  }
+  if (stack.length > 2) {
+    return { err: 'No such file or directory' };
+  }
+  return { segments: stack };
+}
+
+/**
+ * `cd` only: paths must stay within `/home/visitor` (~). Absolute paths must start with `/home/visitor`.
+ * Going above ~ (e.g. `cd ..` at ~) yields `Permission denied`.
+ */
+export function normalizeCdPath(
+  spec: string,
+  fromCwd: string[],
+): { segments: string[] } | { err: string } {
+  const raw = spec.trim();
+  if (raw === '' || raw === '.') {
+    return { segments: [...fromCwd] };
+  }
+  if (raw === '~' || raw === '~/') {
+    return { segments: [] };
+  }
+  if (raw.startsWith('~/')) {
+    return walkCdRelative(splitPathParts(raw.slice(2)), []);
+  }
+  if (raw.startsWith('/')) {
+    const rawPath = raw.replace(/\/{2,}/g, '/');
+    const segments = splitPathParts(rawPath.startsWith('/') ? rawPath.slice(1) : rawPath);
+    const abs = resolveAbsoluteFromRoot(segments);
+    return mapAbsoluteToVirtualCd(abs);
+  }
+  return walkCdRelative(splitPathParts(raw), [...fromCwd]);
+}
 
 export function normalizePath(
   spec: string,
@@ -52,18 +125,20 @@ export function isFilePath(
   segments: string[],
   articleFileNames: Set<string>,
 ): boolean {
+  if (segments.length === 1) return segments[0] === 'profile.txt';
   if (segments.length !== 2) return false;
   const [dir, name] = segments;
   if (dir === 'articles') return articleFileNames.has(name);
-  if (dir === 'projects') return name === 'raycaster.html' || name === 'cuhksz-calendar-sync.html';
+  if (dir === 'projects')
+    return name === 'animal-feeding-3d-raycaster.html' || name === 'cuhksz-deadlines-to-google-calendar.html';
   return false;
 }
 
 export function listDir(segments: string[], articleLsNames: string[]): string[] {
-  if (segments.length === 0) return ['articles', 'projects'];
+  if (segments.length === 0) return ['profile.txt', 'articles', 'projects'];
   if (segments.length === 1 && segments[0] === 'articles') return [...articleLsNames];
   if (segments.length === 1 && segments[0] === 'projects')
-    return ['cuhksz-calendar-sync.html', 'raycaster.html'];
+    return ['cuhksz-deadlines-to-google-calendar.html', 'animal-feeding-3d-raycaster.html'];
   return [];
 }
 

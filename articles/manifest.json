@@ -2,15 +2,15 @@
   "articles": [
     {
       "slug": "aes-gcm",
-      "file": "aes-gcm.md",
+      "file": "analysis-of-aes-gcm.md",
       "title": "Analysis of AES-GCM",
-      "lsName": "aes-gcm.md"
+      "lsName": "analysis-of-aes-gcm.md"
     },
     {
       "slug": "lfsrs",
-      "file": "lfsrs.md",
+      "file": "mathematical-principles-behind-the-lfsrs.md",
       "title": "Mathematical principles behind the LFSRs",
-      "lsName": "lfsrs.md"
+      "lsName": "mathematical-principles-behind-the-lfsrs.md"
     }
   ]
 }
